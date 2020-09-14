@@ -20,14 +20,36 @@ the transform(x, y) function maps between user input and the program.
 
 '''
 
+import random
 
 masterMat = [] #  Keeps track of matrix at all times
 
 def main():
 
-    get_first_move()
-    get_coord()
-    print(eval_game())
+    get_first_move() #  Displays an empty board.
+
+    while True:
+
+        get_coord() #  Get coordinates from user.
+
+        winCondition = eval_game() # Get status of game
+        if winCondition == 'Game not finished':
+            print(winCondition)
+        else:
+            print(winCondition)
+            print_matrix()
+            break
+
+        Easy_Com_Move() # 'Computer' makes a random move
+
+
+        winCondition = eval_game() # Get status of game
+        if winCondition == 'Game not finished':
+            print(winCondition)
+        else:
+            print(winCondition)
+            print_matrix()
+            break
 
 def get_first_move():
     # Sets up the board with initial 9 cells
@@ -35,7 +57,8 @@ def get_first_move():
     valid = ('X', 'O', '_') #  Valid characters the user can enter
 
     while True: #  This for loop runs until a valid input is entered
-        user = input('Enter Cells: > ')
+        #user = input('Enter Cells: > ')
+        user = '_________'
 
         if len(user) != 9:
             print('must enter 9 characters')
@@ -100,11 +123,10 @@ def eval_game():
     for row in transposeMat:
         if len(set(row)) == 1 and '_' not in row:
             return f'{row[0]} wins'
-
     # Do Diagonal
-    if copy[0][0] == copy[1][1] and copy[1][1] == copy[2][2]:
+    if copy[0][0] == copy[1][1] and copy[1][1] == copy[2][2] and '_' not in copy[1][1]:
         return f'{copy[0][0]} wins'
-    elif copy[0][2] == copy[1][1] and copy[1][1] == copy[2][0]:
+    elif copy[0][2] == copy[1][1] and copy[1][1] == copy[2][0] and '_' not in copy[1][1]:
         return f'{copy[0][2]} wins'
 
     # Draw
@@ -113,6 +135,17 @@ def eval_game():
     else:
         return 'Draw'
 
+def Easy_Com_Move():
+    print('Making move level \"easy\"')
+    while True:
+        moveX = random.randint(0,2)
+        moveY = random.randint(0,2)
+        if masterMat[moveX][moveY] != '_': #  choice is a cell already occupied. Repeat loop unti lempty cell is chose
+            continue
+        else:
+            masterMat[moveX][moveY] = 'O'
+            print_matrix()
+            break
 
 
 
@@ -192,4 +225,6 @@ def transform(x,y):
 
 if __name__ == '__main__':
     main()
+
+
 
