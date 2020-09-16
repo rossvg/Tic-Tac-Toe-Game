@@ -43,7 +43,7 @@ def main():
         '''
         # Player1 move.
         while True:
-            if board.update_board(p1.sym, p1.get_move()) == -1:
+            if board.update_board(p1.sym, p1.get_move(board.get_copy())) == -1:
                 continue  # Received error from board indicating the address is already full. Get new move.
             else:  # Board has updated and show it
                 board.print_board()
@@ -58,29 +58,20 @@ def main():
 
         #  player 2 move.
         while True:
-            if board.update_board(p2.sym, p2.get_move()) == -1:
+            if board.update_board(p2.sym, p2.get_move(board.get_copy())) == -1:
                 continue  # Received error from board indicating the address is already full. Get new move.
             else:  # Board has updated and show it
                 board.print_board()
                 break
 
         # Check state.
-        if board.state() == False:  # If false, the game is finished! End Program.
-            break
+        if board.state() != 'Game not finished':  # If does not equal, then the game is finished and end program
+            print(board.state())
+            main()
         else:  # Print the state
             print(board.state())
 
 
-def menu_loop(menu):
-        while True:
-            x = menu.get_command() # Get a command from the user in the menu
-            if x == -1:  # -1 indicates invalid command, repeat the loop and ask for command again.
-                print('Bad parameters!')
-                continue
-            else:  # Parameters are good
-                p1, p2 = menu.create_players(x)
-                break
-        return
 
 
 
@@ -88,23 +79,134 @@ def menu_loop(menu):
 
 class ComputerPlayer:
 
-    from random import random
-
     def __init__(self, sym):
         self.sym = sym
 
-    def get_move(self):
+    def get_move(self, current_board):
 
         from random import randint as r
 
         print('Making move level \"easy\"')
         moveX = r(0,2)
         moveY = r(0,2)
-        args = moveX, moveY
-        return args
+        return moveX, moveY
 #-------------------------END ComputerPlayer CLASS--------------------------------------------------------------------------------
 
-#-------------------------START User CLASS--------------------------------------------------------------------------------
+#-------------------------START  MediumComputerPlayer CLASS--------------------------------------------------------------------------------
+
+class MediumComputerPlayer:
+
+    def __init__(self, sym):
+        self.sym = sym
+        self.oppSym = self.get_opp_sym()
+
+    def get_move(self, currentBoard):
+        print('Making move level \'medium\'')
+
+        #check rows
+        # do rows
+        check1 = self.check_all(currentBoard, self.sym)  # Check to see if there are winning coordinates on the board
+        print(f'check1: {check1}')
+        check2 = self.check_all(currentBoard, self.oppSym)  # Check to see if a block is available
+        print(f'check2: {check2}')
+
+
+        if check1:  # if true, return the the winning coordinate values.
+            print('returning check 1 successful')
+            return check1
+        elif check2:
+            print('check 2 succesfule')
+            return check2
+        else:
+            return self.get_random_move()
+
+    def get_random_move(self):
+        from random import randint as r
+
+        print('making random move')
+        moveX = r(0,2)
+        moveY = r(0,2)
+        args = moveX, moveY
+        return args
+
+    def get_opp_sym(self):  # Get the opposite symbol of the current class symbol
+        if self.sym == 'X':
+            return 'O'
+        else:
+            return 'X'
+
+    def check_all(self, currentBoard, sym_to_check):
+
+        sym = sym_to_check
+
+        # Check for winning values in ROWS
+        print('start row check')
+        for x, row in enumerate(currentBoard):
+            for y, col in enumerate(row):
+                if col == '_': #  If there is an empty space in a row
+                    row[y] = sym # Fill that space with a symbol
+                    if len(set(row)) == 1: # if the set is 1 all the symbols are the same!
+                        print('this is the return statement for row check')
+                        return x,y  # Return the wiinning coordinates
+                    else:  # the set is not one so must be different symbols
+                        row[y] = '_' # return it back to blank character
+
+        print('start col check')
+
+        import copy
+        # Check for winning values in COLS
+        currentBoard_copy = copy.deepcopy(currentBoard)  # Create a copy of the current board to transpose
+        transposeMat = [list(x) for x in zip(*currentBoard_copy)]  # Transpose the current board
+        for x, row in enumerate(transposeMat):  # Loop through new board. Keep track of row number in x
+            for y, col in enumerate(row):  # Loop through each row, value stored in col, index stored in y
+                if col == '_':  # If there is a blank value in the row
+                    row[y] = sym  # Replace the value with the current symbol
+                    if len(set(row)) == 1: # if the set is 1 all the symbols are the same!
+                        transposeMat[x][y] = '!'  # Mark this location in the board with a '!' using x and y as they were keeping track of the index
+                        transposeMat2 = [list(x) for x in zip(*transposeMat)] # Transpose the matrix back to the original
+                        for i, rows2 in enumerate(transposeMat2):  # Find where the '!' symbol is and return the coord
+                            if '!' in rows2:
+                                return i, rows2.index('!')  # Return winning coordinates holy eff this was convoluted
+                    else:
+                        row[y] = '_' # Make sure to change value back!
+
+                # Else: if no if statements succeeded and no return statements, continue on
+
+        # Check first diagonal for winning value
+        diagonal1 = [currentBoard[0][0], currentBoard[1][1], currentBoard[2][2]]
+        for x, y in enumerate(list(diagonal1)):  # go through the fist list. Keep track of index in 'x'
+            if y == "_":  # If there is an empty spot
+                diagonal1[x] = sym  # Fill it with the current symbol
+                if len(set(diagonal1)) == 1:  # See if all symbols match
+                    if x == 0:  # If the symbols match at the 0 position in diagonal, return those coordinates
+                        return 0, 0
+                    elif x == 1:
+                        return 1, 1
+                    elif x == 2:
+                        return 2, 2
+                else:  # Symbols don't match, restore the list
+                    diagonal1[x] = '_'
+
+        # Check second diagonal for winning value
+        print('start diag check 2')
+        diagonal2 = [currentBoard[0][2], currentBoard[1][1], currentBoard[2][0]]
+        for x, y in enumerate(list(diagonal2)):  # go through the fist list. Keep track of index in 'x'
+            if y == "_": # If there is an empty spot
+                diagonal2[x] = sym  # Fill it with the current symbol
+                if len(set(diagonal2)) == 1:  # See if all symbols match
+                    if x == 0:  # If the symbols match at the 0 position in diagonal, return those coordinates
+                        return 0, 2
+                    elif x == 1:
+                        return 1, 1
+                    elif x == 2:
+                        return 2, 0
+                else:  # Symbols don't match, restore the list
+                    diagonal2[x] = '_'
+
+        return False  # No other return statement was met so return false
+
+# -------------------------START User CLASS--------------------------------------------------------------------------------
+
 class User:
     '''
     Capabilities:
@@ -116,7 +218,7 @@ class User:
         self.sym = sym  # Where sym denotes either X or O
         self.move = None  # Player move
 
-    def get_move(self):
+    def get_move(self, currentBoard):
         # Get user coordinates and return GameBoard coordinates
 
         valid = ['1', '2', '3']  # List of valid characters that can be entered
@@ -207,6 +309,11 @@ class GameBoard:
         self.board = self.setup_board()
         # setup the blank matrix
 
+    def get_copy(self):
+        import copy
+        copy = copy.deepcopy(self.board)
+        return copy
+
     def setup_board(self):
         #  Sets up a blank board full of '_' char
         masterMat = []
@@ -295,7 +402,7 @@ class Menu:
 
     def get_command(self):
 
-        valid_players = [ 'user', 'easy',]  # List of valid player commands
+        valid_players = [ 'user', 'easy', 'medium']  # List of valid player commands
 
         cmd = input('Input Command: > ')
         if cmd == 'help':
@@ -331,12 +438,16 @@ class Menu:
             p1 = User('X')
         elif players[0] == 'easy':
             p1 = ComputerPlayer('X')
+        elif players[0] == 'medium':
+            p1 = MediumComputerPlayer('X')
 
         # Player 2 determinatation
         if players[1] == 'user':
             p2 = User('O')
         elif players[1] == 'easy':
             p2 = ComputerPlayer('O')
+        elif players[1] == 'medium':
+            p2 = MediumComputerPlayer('O')
 
         return p1, p2
 
